@@ -109,6 +109,9 @@ def usage():
     print("\n       --midas_args <midas args>", file=sys.stderr)
     print("              Optional.  String containing arguments to midas to add during ", file=sys.stderr)
     print("              compilation of the assembly test", file=sys.stderr)
+    print("\n       --gcc_args <gcc args>", file=sys.stderr)
+    print("              Optional.  String containing arguments to gcc to add during ", file=sys.stderr)
+    print("              compilation of the assembly test", file=sys.stderr)
     print("\n       --ustr", file=sys.stderr)
     print("              Specifies that test names in the file should be treated as .ustr file names", file=sys.stderr)
     print("\n       --no_wait_fpga_config", file=sys.stderr)
@@ -281,12 +284,12 @@ def addrDataFromC(fname):
 
     return test_addr_data_map
 
-def compileASMTest(tname, uart_div_latch, st_brd, flog, midas_args=None, coreType="sparc", precompiled=False, x_tiles=1, y_tiles=1):
+def compileASMTest(tname, uart_div_latch, st_brd, flog, midas_args=None, gcc_args=None, coreType="sparc", precompiled=False, x_tiles=1, y_tiles=1):
     prev_dir = os.getcwd()
     os.chdir(MODEL_DIR)
     print_info("Compiling %s" % tname)
     # Run midas only to get mem.image file
-    rv = runMidas(tname, uart_div_latch, flog, midas_args, coreType, precompiled, x_tiles, y_tiles)
+    rv = runMidas(tname, uart_div_latch, flog, midas_args, gcc_args, coreType, precompiled, x_tiles, y_tiles)
     if rv != 0:
         return rv
 
@@ -336,6 +339,7 @@ def setParserOptions(parser):
     parser.add_option("--y_tiles", dest="y_tiles", action="store", default=1)
     parser.add_option("--precompiled", dest="precompiled", action="store_true", default=False)
     parser.add_option("--midas_args", dest="midas_args", action="store")
+    parser.add_option("--gcc_args", dest="gcc_args", action="store")
     parser.add_option("--ustr", dest="ustr", action="store_true", default=False)
     parser.add_option("--no_wait_fpga_config", dest="no_wait_fpga_config", action="store_true", default=False)
     parser.add_option("-h", "--help", dest="help", action="store_true", default=False)

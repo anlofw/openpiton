@@ -258,17 +258,30 @@ def getTestList(fname, flog, ustr_files=False):
 #           uart_div_latch  - UART dividor latch value for UART16550 config
 #           flog            - log file descriptor
 # Output:   rv              - return value from midas
-# Description: compile assebly test using midas tool
+# Description: compile assembly test using midas tool
 ############################################################################
-def runMidas(tname, uart_div_latch, flog, midas_args=None, coreType="sparc", precompiled=False, x_tiles=1, y_tiles=1):
+def runMidas(tname, uart_div_latch, flog, midas_args=None, gcc_args=None, coreType="sparc", precompiled=False, x_tiles=1, y_tiles=1):
     cmd = ""
-    if midas_args is None:
-        cmd = "sims -sys=manycore -novcs_build -midas_only \
-              -midas_args='-DUART_DIV_LATCH=0x%x -DFPGA_HW -DCIOP -DNO_SLAN_INIT_SPC' %s" % (uart_div_latch, tname)
+
+    if gcc_args is None:
+        gcc_str = ""
     else:
-       	cmd = "sims -sys=manycore -novcs_build -midas_only \
-              -midas_args='-DUART_DIV_LATCH=0x%x -DFPGA_HW -DCIOP -DNO_SLAN_INIT_SPC %s' %s" % \
-              (uart_div_latch, midas_args, tname)
+        gcc_str = ""
+        args_list = gcc_args.split()
+        for gcc_arg in args_list:
+            gcc_str += " -gcc_args='%s'" % (gcc_arg)
+
+    if midas_args is None:
+        #cmd = "sims -sys=manycore -novcs_build -midas_only \
+        #      -midas_args='-DUART_DIV_LATCH=0x%x -DFPGA_HW -DCIOP -DNO_SLAN_INIT_SPC' %s" % (uart_div_latch, tname)
+        midas_str = " -midas_args='-DUART_DIV_LATCH=0x%x -DFPGA_HW -DCIOP -DNO_SLAN_INIT_SPC'" % (uart_div_latch)
+    else:
+       	#cmd = "sims -sys=manycore -novcs_build -midas_only \
+        #      -midas_args='-DUART_DIV_LATCH=0x%x -DFPGA_HW -DCIOP -DNO_SLAN_INIT_SPC %s' %s" % \
+        #      (uart_div_latch, midas_args, tname)
+        midas_str = " -midas_args='-DUART_DIV_LATCH=0x%x -DFPGA_HW -DCIOP -DNO_SLAN_INIT_SPC %s'" % (uart_div_latch, midas_args)
+
+    cmd = "sims -sys=manycore -novcs_build -midas_only%s%s %s" % (gcc_str, midas_str, tname)
 
     if coreType == "ariane":
         # specify uart_dmw in order to include load instructions for PASS/FAIL
