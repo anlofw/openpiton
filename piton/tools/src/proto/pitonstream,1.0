@@ -56,10 +56,10 @@ class bcolors:
 
 FLOG_NAME = os.path.join(MODEL_DIR, "uart_piton.log")
 
-CFG_DONE_KEY        = "DONE"
-TEST_PASSED_KEY     = "PASSED"
-TEST_FAILED_KEY     = "FAILED"
-TEST_TIMEOUT_KEY    = "TIMEOUT"
+CFG_DONE_KEY        = b"DONE"
+TEST_PASSED_KEY     = b"PASSED"
+TEST_FAILED_KEY     = b"FAILED"
+TEST_TIMEOUT_KEY    = b"TIMEOUT"
 
 CFG_DONE_EVENT      = 0
 TEST_PASSED_EVENT   = 1
@@ -117,6 +117,8 @@ def usage():
     print("\n       --no_wait_fpga_config", file=sys.stderr)
     print("              Do not wait for signal that FPGA is configured before running tests.", file=sys.stderr)
     print("              Assume FPGA is configured at launch.", file=sys.stderr)
+    print("\n       --uart_reset", file=sys.stderr)
+    print("              Resets and configures the FPGA using the UART.", file=sys.stderr)
     print("\n       -h, --help", file=sys.stderr)
     print("              Display this help message and exit", file=sys.stderr)
     print("\n", file=sys.stderr)
@@ -187,25 +189,29 @@ def writeSTDOUT(s):
     sys.stdout.flush()
 
 def pollUART(ser):
-    rdata_all = ""
+    rdata_all = b""
     tstop = None
+    event = KEY_EVENT_MAP[TEST_TIMEOUT_KEY]
+
     while True:
         rdata = ser.read(2048)
         if len(rdata) > 0:
             # have to store all data in case of a key
             # is split between two different reads from serial device
-            rdata_all += str(rdata)
+            rdata_all += rdata
 
             was_key = False
             for key in list(KEY_EVENT_MAP.keys()):
                 # because of split keyword, have to search in all read data
-                m = re.search("%s" % key, rdata_all)
-                if m != None:
+                # m = re.search("%s" % key, rdata_all)
+                # if m != None:
+                if key in rdata_all:
                     tstop = time.time()
                     event = KEY_EVENT_MAP[key]
                     # if keyword was in the current read chunk of data,
                     # we can remove it, since it's not test output
-                    rdata = re.sub("%s" % key, "", str(rdata))
+                    #rdata = re.sub("%s" % key, "", str(rdata))
+                    rdata = rdata.replace(key, b'')
                     was_key = True
                     break
 
@@ -342,6 +348,7 @@ def setParserOptions(parser):
     parser.add_option("--gcc_args", dest="gcc_args", action="store")
     parser.add_option("--ustr", dest="ustr", action="store_true", default=False)
     parser.add_option("--no_wait_fpga_config", dest="no_wait_fpga_config", action="store_true", default=False)
+    parser.add_option("--uart_reset", dest="uart_reset", action="store_true", default=False)
     parser.add_option("-h", "--help", dest="help", action="store_true", default=False)
 
     return parser
@@ -383,17 +390,33 @@ def main():
 
     # Wait until FPGA is configure
     if not options.no_wait_fpga_config:
-    	writeSTDOUT("Press reset button on FPGA\n")
-    	writeSTDOUT("Waiting...\n")
-    	while True:
-    	    try:
-    	        event = pollUART(ser)[0]
-    	        if event == CFG_DONE_EVENT:
-    	            writeSTDOUT("\nConfiguration is complete\n\n")
-    	            break
-    	    except KeyboardInterrupt:
-    	        processKeyboardInterrupt(ser, flog)
-    	        return
+        # writeSTDOUT("Press reset button on FPGA\n")
+        # writeSTDOUT("Waiting...\n")
+        # while True:
+        #     try:
+        #         event = pollUART(ser)[0]
+        #         if event == CFG_DONE_EVENT:
+        #             writeSTDOUT("\nConfiguration is complete\n\n")
+        #             break
+        #     except KeyboardInterrupt:
+        #         processKeyboardInterrupt(ser, flog)
+        #         return
+
+        if options.uart_reset:
+            writeSTDOUT("Sending reset to FPGA on UART\n")
+            ser.write(b'\x34\x8f\x27\xaf\x13\x72\x33\x9a')
+        else:
+            writeSTDOUT("Press reset button on FPGA\n")
+        writeSTDOUT("Waiting...\n")
+        while True:
+            try:
+                event = pollUART(ser)[0]
+                if event == CFG_DONE_EVENT:
+                    writeSTDOUT("\nConfiguration is complete\n\n")
+                    break
+            except KeyboardInterrupt:
+                processKeyboardInterrupt(ser, flog)
+                return
 
     # Main test loop
     fp = open("pitonstream_summary.csv", "w")
@@ -408,7 +431,7 @@ def main():
             print_info("Using precompiled RISCV test for Ariane.")
         # Compile .s tests to get .ustr
         if options.ustr == False:
-            rv = compileASMTest(tname, uart_div_latch, st_brd, flog, options.midas_args, options.core, options.precompiled, options.x_tiles, options.y_tiles)
+            rv = compileASMTest(tname, uart_div_latch, st_brd, flog, options.midas_args, options.gcc_args, options.core, options.precompiled, options.x_tiles, options.y_tiles)
             if rv != 0:
                 print_error("Test compilation failed")
                 print_error("Skipping %s" % tname)
