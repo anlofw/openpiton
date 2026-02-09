@@ -1528,7 +1528,7 @@ sub generic_sim_build
     }
 	
     if ($opt{vlt_build}) {
-      $build_cmd = "verilator -cc " ;
+      $build_cmd = "verilator -cc --trace " ;
       $build_cmd .= "-exe $dv_root/tools/verilator/my_top.cpp " ;
       $build_cmd .= "$dv_root/tools/pli/iop/b_ary.c " ;
       $build_cmd .= "$dv_root/tools/pli/iop/bw_lib.c " ;
@@ -1544,6 +1544,7 @@ sub generic_sim_build
       $build_cmd .= "--unroll-count 256 " ;
       $build_cmd .= "-CFLAGS -DVERILATOR " ;
       $build_cmd .= "-CFLAGS -DPITON_DPI " ;
+      $build_cmd .= "-CFLAGS -DVERILATOR_VCD " ;
       $build_cmd .= "-CFLAGS -lstdc++ " ;
       $build_cmd .= "-CFLAGS -I$dv_root/tools/pli/iop " ;
       $build_cmd .= "-CFLAGS -I$dv_root/tools/verilator " ;
