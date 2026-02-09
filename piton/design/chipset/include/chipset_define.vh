@@ -89,7 +89,7 @@
     `define ADDR_TRANS_SECTION_MULT         1
 `endif
 
-`define ASM_TIMEOUT_CYCLES  64'd5000000000
+`define ASM_TIMEOUT_CYCLES  64'd500000000000
 
 `define CFG_DONE_STRING     0
 `define PASSED_STRING       1
