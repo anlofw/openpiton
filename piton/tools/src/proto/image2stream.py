@@ -29,13 +29,13 @@ from fpga_lib import *
 
 MAX_BLOCK_NUM   = 255
 ADDR_BIT_WIDTH  = 40
-ADDR_HEX_WIDTH  = ADDR_BIT_WIDTH / 4
+ADDR_HEX_WIDTH  = ADDR_BIT_WIDTH // 4
 BLOCK_NUM_WIDTH = 2     # in # of hex digits, 1 byte = 2 hex digits
 START_TRIGGER   = 0xaaaaaaaaaa
 PA_WIDTH        = 16
 STOP_ADDR       = 0xffffffffff
 DWORD_BIT_WIDTH = 64
-DWORD_HEX_WIDTH = DWORD_BIT_WIDTH / 4
+DWORD_HEX_WIDTH = DWORD_BIT_WIDTH // 4
 
 def flushGroup(fptr, addr_str, gr_blocks):
     if int(addr_str, 16) > 2**ADDR_BIT_WIDTH - 1:
@@ -69,8 +69,8 @@ def makeStreamFile(fname_bram):
     print(strFromAddr(START_TRIGGER,ADDR_HEX_WIDTH), file=fout)
 
     blk_bit_width   = NOC_PAYLOAD_WIDTH
-    blk_hex_width   = blk_bit_width / 4
-    bytes_in_blk    = blk_bit_width / 8
+    blk_hex_width   = blk_bit_width // 4
+    bytes_in_blk    = blk_bit_width // 8
 
     block_pattern = re.compile('([0-9a-fA-F]{%d})' % blk_hex_width)
     for line in fin:
