@@ -139,6 +139,8 @@ _start:
   la t0, trap_entry
   csrw mtvec, t0
 
+  csrw mie, zero
+
   # initialize global pointer
 .option push
 .option norelax
