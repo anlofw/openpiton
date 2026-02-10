@@ -66,7 +66,7 @@ begin
 
     if (`L2_TOP0.pipe1.ctrl.valid_S1 && ~`L2_TOP0.pipe1.ctrl.stall_S1)
     begin
-        $display("TILE0-------------------------------------");
+        $display("TILE0 L2----------------------------------");
         $display($time);
         $write($time, " P1S1 msg type: ");
         print_msg_type(`L2_TOP0.pipe1.ctrl.msg_type_trans_S1);
@@ -91,11 +91,12 @@ begin
         $display("Msg length: %b", `L2_TOP0.pipe1.msg_length);
         $display("src x: %b, src y: %b", `L2_TOP0.pipe1.dpath.src_x_S1, `L2_TOP0.pipe1.dpath.src_y_S1);
         $display("sdid: %d, lsid: %d", `L2_TOP0.pipe1.dpath.sdid_S1, `L2_TOP0.pipe1.dpath.lsid_S1);
+        $display("TILE0 L2++++++++++++++++++++++++++++++++++");
 
     end
     if (`L2_TOP0.pipe1.ctrl.valid_S2 && ~`L2_TOP0.pipe1.ctrl.stall_real_S2)
     begin
-        $display("TILE0-------------------------------------");
+        $display("TILE0 L2----------------------------------");
         $display($time);
         $write($time, " P1S2 msg type: ");
         print_msg_type(`L2_TOP0.pipe1.ctrl.msg_type_S2_f);
@@ -137,6 +138,7 @@ begin
         $display("State data mask in: 0x%h", `L2_TOP0.pipe1.dpath.state_data_mask_in_S2);
         $display("src x: %b, src y: %b", `L2_TOP0.pipe1.dpath.src_x_S2_f, `L2_TOP0.pipe1.dpath.src_y_S2_f);
         $display("sdid: %d, lsid: %d", `L2_TOP0.pipe1.dpath.sdid_S2_f, `L2_TOP0.pipe1.dpath.lsid_S2_f);
+        $display("TILE0 L2++++++++++++++++++++++++++++++++++");
 
     end
 
