@@ -243,6 +243,9 @@ def getTestList(fname, flog, ustr_files=False):
     test_list = list()
     suff = "ustr" if ustr_files else "([s|S|c]|riscv)"
     for line in f:
+        if line.startswith('#'):
+            continue
+
         mstr = "([0-9a-zA-Z_-]+\.%s)" % suff
         m = re.search(mstr, line)
         if m != None:
