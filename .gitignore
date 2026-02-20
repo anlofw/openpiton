@@ -3,6 +3,9 @@
 *.log
 *a.out
 
+piton/verif/diag/riscv/rv64/c/*/
+piton/verif/diag/riscv/rv64/precompiled/*
+
 # Ignore everything in model directory
 build/*
 !build/.keep
