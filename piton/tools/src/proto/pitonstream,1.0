@@ -188,6 +188,10 @@ def writeSTDOUT(s):
     sys.stdout.write(s)
     sys.stdout.flush()
 
+def writeSTDERR(s):
+    sys.stderr.write(s)
+    sys.stderr.flush()
+
 def pollUART(ser):
     rdata_all = b""
     tstop = None
@@ -222,7 +226,7 @@ def pollUART(ser):
 
     return (event, tstop)
 
-def loadTest(tname, ser):
+def loadTest(tname, orig_tname, ser):
     prev_dir = os.getcwd()
     os.chdir(MODEL_DIR)
 
@@ -234,7 +238,7 @@ def loadTest(tname, ser):
 
     f = open(tname, 'r')
 
-    writeSTDOUT("Loading a test...\n")
+    writeSTDOUT(f"Loading a test...{orig_tname}\n")
     line_cnt = 0
     prev_perc = 0
     for line in f:
@@ -243,12 +247,13 @@ def loadTest(tname, ser):
         line_cnt += 1
         perc = 100*line_cnt/num_lines
         if (perc > prev_perc):
-            sys.stdout.write("%d%%\r" % perc)
-            sys.stdout.flush()
+            writeSTDERR("%d%%\r" % perc)
+            # sys.stderr.write("%d%%\r" % perc)
+            # sys.stderr.flush()
             prev_perc = perc
 
     tstart = time.time()
-    writeSTDOUT("\nTEST OUTPUT >>>\n")
+    writeSTDOUT(f"\nTEST OUTPUT {orig_tname} >>>\n")
     f.close()
 
     os.chdir(prev_dir)
@@ -403,15 +408,19 @@ def main():
         #         return
 
         if options.uart_reset:
+            writeSTDERR("Sending reset to FPGA on UART\n")
             writeSTDOUT("Sending reset to FPGA on UART\n")
             ser.write(b'\x34\x8f\x27\xaf\x13\x72\x33\x9a')
         else:
+            writeSTDERR("Press reset button on FPGA\n")
             writeSTDOUT("Press reset button on FPGA\n")
+        writeSTDERR("Waiting...\n")
         writeSTDOUT("Waiting...\n")
         while True:
             try:
                 event = pollUART(ser)[0]
                 if event == CFG_DONE_EVENT:
+                    writeSTDERR("\nConfiguration is complete\n\n")
                     writeSTDOUT("\nConfiguration is complete\n\n")
                     break
             except KeyboardInterrupt:
@@ -443,7 +452,7 @@ def main():
             ustr_name = tname
 
         try:
-            (rv, tstart) = loadTest(ustr_name, ser)
+            (rv, tstart) = loadTest(ustr_name, tname, ser)
             if rv != 0:
                 print_error("Can not upload a stream. Skipping %s" % tname)
                 continue

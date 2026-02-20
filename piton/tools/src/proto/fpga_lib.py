@@ -230,8 +230,8 @@ def isTranslatorOK(addr_data_map, flog, ariane):
                 addr_mapped = True
                 break
         if not addr_mapped:
-            print("ERROR: Address %s is not mapped in %s" % (hex(addr), map_loc), file=flog)
-            print("ERROR: Address %s is not mapped in %s" % (hex(addr), map_loc), file=sys.stderr)
+            dbg.print_error("Address %s is not mapped in %s" % (hex(addr), map_loc), file=flog)
+            dbg.print_error("Address %s is not mapped in %s" % (hex(addr), map_loc), file=sys.stderr)
             return False
 
     return True
