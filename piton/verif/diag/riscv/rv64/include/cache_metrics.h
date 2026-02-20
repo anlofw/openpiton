@@ -47,39 +47,39 @@
 #define zero 0x0
 
 
-void reset_L2_metrics(uint8_t coreid) {
+static inline void reset_L2_metrics(uint8_t coreid) {
     asm volatile ("sd %0,0(%1)"::"r" (zero), "r" (L2_ACR | coreid << 24));             //Reset Counter Access
     asm volatile ("sd %0,0(%1)"::"r" (zero), "r" (L2_MCR | coreid << 24));             //Reset Counter Miss
 }
 
-void init_L2_metrics(uint8_t coreid) {
+static inline void init_L2_metrics(uint8_t coreid) {
     asm volatile ("sd %0,0(%1)"::"r" (enable_L2_CR), "r" (L2_CR | coreid << 24));      //Init count
 }
 
-void stop_L2_metrics(uint8_t coreid) {
+static inline void stop_L2_metrics(uint8_t coreid) {
     asm volatile ("sd %0,0(%1)"::"r" (zero), "r" (L2_CR | coreid << 24));              //Stop count
 }
 
-uint64_t read_L2_access(uint8_t coreid) {
+static inline uint64_t read_L2_access(uint8_t coreid) {
     uint64_t L2_access = zero;
     asm volatile ("ld %0,0(%1)":"=r" (L2_access):"r" (L2_ACR | coreid << 24));         //Read Counter Access
     return (uint64_t)__builtin_bswap64(L2_access);
 }
 
-uint64_t read_L2_misses(uint8_t coreid) {
+static inline uint64_t read_L2_misses(uint8_t coreid) {
     uint64_t L2_miss = zero;
     asm volatile ("ld %0,0(%1)":"=r" (L2_miss):"r" (L2_MCR | coreid << 24));           //Read Counter Miss
     return (uint64_t)__builtin_bswap64(L2_miss);
 }
 
-uint64_t read_L2_coreid(uint8_t coreid){
+static inline uint64_t read_L2_coreid(uint8_t coreid){
     uint64_t L2_coreid = zero;
     asm volatile ("ld %0,0(%1)":"=r" (L2_coreid):"r" (L2_CIR | coreid << 24));           //Read coreid
     return (uint64_t)__builtin_bswap64(L2_coreid);
     
 }
 
-void print_L2_metrics(uint8_t coreid) {
+static inline void print_L2_metrics(uint8_t coreid) {
     uint64_t L2_access = read_L2_access(coreid);
     uint64_t L2_miss = read_L2_access(coreid);
     printf("L2 access: %ld\n",L2_access);
