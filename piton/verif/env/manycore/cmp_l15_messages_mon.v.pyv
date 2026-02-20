@@ -363,6 +363,8 @@ begin
     // monitoring outgoing noc1/noc3 messages
     if (`L15_TOP0.noc1encoder.sending)
     begin
+        $display("TILE0 L15----------------------------------");
+
         $display($time);
         $display("TILE0 noc1 flit raw: 0x%x", `L15_TOP0.noc1encoder.flit);
         $display("   srcX: %d, srcY: %d", `L15_TOP0.noc1encoder.msg_src_xpos, `L15_TOP0.noc1encoder.msg_src_ypos);
@@ -375,7 +377,7 @@ begin
             `endif
                 `MONITOR_PATH.fail("l15_mon: TILE0 noc1 sends X data");
         end
-
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
 
 
@@ -384,6 +386,7 @@ begin
     if (`L15_PIPE0.pcxdecoder_l15_val && `L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1 && !`L15_PIPE0.noc2decoder_l15_val
         && `L15_PIPE0.fetch_state_s1 == `L15_FETCH_STATE_NORMAL)
     begin
+        $display("TILE0 L15----------------------------------");
         $write("%0d TILE0 L1.5 th%d: Received PCX ", $time, `L15_PIPE0.pcxdecoder_l15_threadid); decode_pcx_op(`L15_PIPE0.pcxdecoder_l15_rqtype, `L15_PIPE0.pcxdecoder_l15_amo_op);
         $display("   Addr 0x%x, nc %d, size %d, invalall %d, pf %d, bs %d, bsi %d, l1way %d",
                                 `L15_PIPE0.pcxdecoder_l15_address, `L15_PIPE0.pcxdecoder_l15_nc, `L15_PIPE0.pcxdecoder_l15_size, `L15_PIPE0.pcxdecoder_l15_invalidate_cacheline,
@@ -438,10 +441,13 @@ begin
             $display("    Thread ID: %d", pcx_interrupt_threadid);
             $display("    Vector: %d", pcx_interrupt_vector);
         end
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
+
     end
 
     if (`L15_PIPE0.noc2decoder_l15_val && `L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1)
     begin
+        $display("TILE0 L15----------------------------------");
         noc2 = 0;
         case(`L15_PIPE0.noc2decoder_l15_reqtype)
         `MSG_TYPE_RESERVED:
@@ -481,10 +487,12 @@ begin
         $display("   Data2: 0x%x", `L15_PIPE0.noc2decoder_l15_data_1);
         $display("   Data3: 0x%x", `L15_PIPE0.noc2decoder_l15_data_2);
         $display("   Data4: 0x%x", `L15_PIPE0.noc2decoder_l15_data_3);
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
 
     if (`L15_PIPE0.l15_cpxencoder_val && !`L15_PIPE0.stall_s3)
     begin
+        $display("TILE0 L15----------------------------------");
         cpx = 0;
         case(`L15_PIPE0.l15_cpxencoder_returntype)
             `CPX_RESTYPE_LOAD:
@@ -532,10 +540,12 @@ begin
         $display("   Data1: 0x%x", `L15_PIPE0.l15_cpxencoder_data_1);
         $display("   Data2: 0x%x", `L15_PIPE0.l15_cpxencoder_data_2);
         $display("   Data3: 0x%x", `L15_PIPE0.l15_cpxencoder_data_3);
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
 
     if (`L15_TOP0.noc1encoder.noc1encoder_noc1out_val && `L15_TOP0.noc1encoder.noc1encoder_noc1buffer_req_ack)
     begin
+        $display("TILE0 L15----------------------------------");
         noc1 = 0;
         case(`L15_TOP0.noc1encoder.req_type)
         `L15_NOC1_REQTYPE_WRITEBACK_GUARD:
@@ -585,10 +595,12 @@ begin
         $display("   Data0: 0x%x", `L15_TOP0.noc1encoder.noc1buffer_noc1encoder_req_data_0);
         $display("   Data1: 0x%x", `L15_TOP0.noc1encoder.noc1buffer_noc1encoder_req_data_1);
         $display("   Destination X: %d Y: %d", `L15_TOP0.noc1encoder.msg_dest_l2_xpos, `L15_TOP0.noc1encoder.msg_dest_l2_ypos);
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
 
     if (`L15_TOP0.noc3encoder.noc3encoder_noc3out_val && `L15_TOP0.noc3encoder.noc3encoder_l15_req_ack)
     begin
+        $display("TILE0 L15----------------------------------");
         noc3 = 0;
         case(`L15_TOP0.noc3encoder.l15_noc3encoder_req_type)
         `L15_NOC3_REQTYPE_WRITEBACK:
@@ -623,6 +635,7 @@ begin
         $display("   destX: %d, destY: %d", `L15_TOP0.noc3encoder.dest_l2_xpos, `L15_TOP0.noc3encoder.dest_l2_ypos);
         $display("   Data0: 0x%x", `L15_TOP0.noc3encoder.l15_noc3encoder_req_data_0);
         $display("   Data1: 0x%x", `L15_TOP0.noc3encoder.l15_noc3encoder_req_data_1);
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
 
     do_print_stage_TILE0 = ((`L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1) || (`L15_PIPE0.val_s2 && !`L15_PIPE0.stall_s2) || (`L15_PIPE0.val_s3 && !`L15_PIPE0.stall_s3));
@@ -630,6 +643,7 @@ begin
     begin
         // $display("");
         $display("");
+        $display("TILE0 L15----------------------------------");
         $display($time, " L15 TILE0:");
         $display("NoC1 credit: %d", `L15_PIPE0.creditman_noc1_avail);
         $display("NoC1 reserved credit: %d", `L15_PIPE0.creditman_noc1_reserve);
@@ -935,57 +949,71 @@ begin
             end
         end
         $display ("L15_MON_END");
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
         $display ("");
     end
 
 //CSM monitor
     if(`L15_TOP0.l15_csm.l15_csm_req_val_s2)
     begin
+        $display("TILE0 L15----------------------------------");
         $display($time, ": TILE0 L15_CSM REQ MON:");
         $display("L15 CSM req addr: 0x%x", `L15_TOP0.l15_csm.l15_csm_req_address_s2);
         $display("L15 CSM req ticket: %d", `L15_TOP0.l15_csm.l15_csm_req_ticket_s2);
         $display("L15 CSM req type: %d", `L15_TOP0.l15_csm.l15_csm_req_type_s2);
         $display("L15 CSM req data: 0x%x", `L15_TOP0.l15_csm.l15_csm_req_data_s2);
         $display("L15 CSM req pcx data: 0x%x", `L15_TOP0.l15_csm.l15_csm_req_pcx_data_s2);
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
     if(`L15_TOP0.l15_csm.csm_l15_res_val_s3)
     begin
+        $display("TILE0 L15----------------------------------");
         $display($time, ": TILE0 L15_CSM RES MON:");
         $display("L15 CSM res data: 0x%x", `L15_TOP0.l15_csm.csm_l15_res_data_s3);
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
     if(`L15_TOP0.l15_csm.csm_l15_read_res_val)
     begin
+        $display("TILE0 L15----------------------------------");
         $display($time, ": TILE0 L15_CSM READ TICKET MON:");
         $display("L15 CSM read ticket: %d", `L15_TOP0.l15_csm.l15_csm_read_ticket);
         $display("L15 CSM read data: 0x%x", `L15_TOP0.l15_csm.csm_l15_read_res_data);
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
     if(`L15_TOP0.l15_csm.csm_noc1encoder_req_val)
     begin
+        $display("TILE0 L15----------------------------------");
         $display($time, ": TILE0 L15_CSM NOC1 REQ MON:");
         $display("L15 CSM noc1 req addr: 0x%x", `L15_TOP0.l15_csm.csm_noc1encoder_req_address);
         $display("L15 CSM noc1 req type: %d", `L15_TOP0.l15_csm.csm_noc1encoder_req_type);
         $display("L15 CSM noc1 req mshrid: %d", `L15_TOP0.l15_csm.csm_noc1encoder_req_mshrid);
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
     if(`L15_TOP0.l15_csm.noc1encoder_csm_req_ack)
     begin
+        $display("TILE0 L15----------------------------------");
         $display($time, ": TILE0 L15_CSM NOC1 REQ ACK MON:");
         $display("L15 CSM noc1 req ack: %b", `L15_TOP0.l15_csm.noc1encoder_csm_req_ack);
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
 
     if(`L15_TOP0.l15_csm.write_val_s2 && (~`L15_TOP0.l15_csm.ghid_val_s2))
     begin
+        $display("TILE0 L15----------------------------------");
         $display("L1.5 MON: HMC refills invalid data");
         $display("%d : Simulation -> FAIL(%0s)", $time, "L1.5 MON: HMC refills invalid data");
         `ifndef VERILATOR
         repeat(5)@(posedge clk)
         `endif
             `MONITOR_PATH.fail("L1.5 MON: HMC refills invalid data");
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
 
 // valid mshrid monitor
     // check for incoming messages
     if (`L15_PIPE0.noc2decoder_l15_val && `L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1)
     begin
+        $display("TILE0 L15----------------------------------");
         is_csm_mshrid_TILE0 = `L15_PIPE0.noc2decoder_l15_hmc_fill;
         if ((`L15_PIPE0.noc2decoder_l15_reqtype == `MSG_TYPE_NODATA_ACK ||
             `L15_PIPE0.noc2decoder_l15_reqtype == `MSG_TYPE_DATA_ACK)
@@ -1014,6 +1042,7 @@ begin
                 //     `MONITOR_PATH.fail("L1.5 MON: Received NoC2 message with invalid MSHRID");
             // end
         end
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
     // if (`L15_PIPE0.l15_noc1buffer_req_val && !`L15_PIPE0.stall_s3)
     // begin
@@ -1087,6 +1116,7 @@ begin
 // monitor INT_VEC_DIS requests
     if (`L15_PIPE0.pcxdecoder_l15_val && `L15_PIPE0.val_s1 && !`L15_PIPE0.stall_s1 && !`L15_PIPE0.noc2decoder_l15_val)
     begin
+        $display("TILE0 L15----------------------------------");
         if (`L15_PIPE0.pcxdecoder_l15_rqtype == `PCX_REQTYPE_STORE
             && `L15_PIPE0.pcxdecoder_l15_address == 40'h9800000800)
         begin
@@ -1097,6 +1127,7 @@ begin
             // `endif
                 // `MONITOR_PATH.fail("Write to INT_VEC_DIS");
         end
+        $display("TILE0 L15++++++++++++++++++++++++++++++++++");
     end
 
 // monitor noc1 buffer credit for underflow

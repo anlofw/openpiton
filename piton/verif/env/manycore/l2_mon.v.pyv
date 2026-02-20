@@ -146,7 +146,7 @@ begin
 
     if (`L2_TOP0.pipe1.ctrl.valid_S3 && ~`L2_TOP0.pipe1.ctrl.stall_S3)
     begin
-        $display("TILE0-------------------------------------");
+        $display("TILE0 L2----------------------------------");
         $display($time);
         $write($time, " P1S3 msg type: ");
         print_msg_type(`L2_TOP0.pipe1.ctrl.msg_type_S3_f);
@@ -167,11 +167,12 @@ begin
                  `L2_TOP0.pipe1.dpath.l2_way_state_subline_S3_f, `L2_TOP0.pipe1.dpath.l2_way_state_cache_type_S3_f,
                  `L2_TOP0.pipe1.dpath.l2_way_state_owner_S3_f);
         $display("sdid: %d, lsid: %d", `L2_TOP0.pipe1.dpath.sdid_S3_f, `L2_TOP0.pipe1.dpath.lsid_S3_f);
+        $display("TILE0 L2++++++++++++++++++++++++++++++++++");
     end
 
     if (`L2_TOP0.pipe1.ctrl.valid_S4  && (~`L2_TOP0.pipe1.ctrl.stall_S4 || (`L2_TOP0.pipe1.ctrl.msg_stall_S4 || `L2_TOP0.pipe1.ctrl.dir_data_stall_S4)))
     begin
-        $display("TILE0-------------------------------------");
+        $display("TILE0 L2----------------------------------");
         $display($time);
         $write($time, " P1S4 msg type: ");
         print_msg_type(`L2_TOP0.pipe1.ctrl.msg_type_S4_f);
@@ -236,11 +237,13 @@ begin
         $display("Msg send data: 0x%h", `L2_TOP0.pipe1.dpath.msg_send_data_S4);
         $display("src x: %b, src y: %b", `L2_TOP0.pipe1.dpath.src_x_S4_f, `L2_TOP0.pipe1.dpath.src_y_S4_f);
         $display("sdid: %d, lsid: %d", `L2_TOP0.pipe1.dpath.sdid_S4_f, `L2_TOP0.pipe1.dpath.lsid_S4_f);
+        $display("TILE0 L2++++++++++++++++++++++++++++++++++");
     end
 
     // Tri: print out raw messages
     if (`L2_TOP0.pipe1.buf_out.valid_out && `L2_TOP0.pipe1.buf_out.ready_out)
     begin
+        $display("TILE0 L2----------------------------------");
         $display($time);
         $display("TILE0 noc2 flit raw: 0x%x", `L2_TOP0.pipe1.buf_out.data_out);
         if ( ^`L2_TOP0.pipe1.buf_out.data_out === 1'bx)
@@ -251,12 +254,13 @@ begin
             `endif
             `MONITOR_PATH.fail("l2_mon: TILE0 noc2 sends X data");
         end
+        $display("TILE0 L2++++++++++++++++++++++++++++++++++");
     end
 
 
     if (`L2_TOP0.pipe2.ctrl.valid_S1  && ~`L2_TOP0.pipe2.ctrl.stall_S1)
     begin
-        $display("TILE0-------------------------------------");
+        $display("TILE0 L2----------------------------------");
         $display($time);
         $write("P2S1 msg type: ");
         print_msg_type(`L2_TOP0.pipe2.ctrl.msg_type_S1);
@@ -278,13 +282,13 @@ begin
         $display("Tag_data_mask_in: 0x%h", `L2_TOP0.pipe2.dpath.tag_data_mask_in_S1);
         $display("State_rd_addr: 0x%h",`L2_TOP0.pipe2.dpath.state_rd_addr_S1);
         $display("src x: %b, src y: %b", `L2_TOP0.pipe2.dpath.src_x_S1, `L2_TOP0.pipe2.dpath.src_y_S1);
-
+        $display("TILE0 L2++++++++++++++++++++++++++++++++++");
     end
 
 
     if (`L2_TOP0.pipe2.ctrl.valid_S2  && ~`L2_TOP0.pipe2.ctrl.stall_real_S2)
     begin
-        $display("TILE0-------------------------------------");
+        $display("TILE0 L2----------------------------------");
         $display($time);
         $write("P2S2 msg type: ");
         print_msg_type(`L2_TOP0.pipe2.ctrl.msg_type_S2_f);
@@ -318,11 +322,11 @@ begin
         $display("State data in: 0x%h", `L2_TOP0.pipe2.dpath.state_data_in_S2);
         $display("State data mask: 0x%h", `L2_TOP0.pipe2.dpath.state_data_mask_in_S2);
         $display("src x: %b, src y: %b", `L2_TOP0.pipe2.dpath.src_x_S2_f, `L2_TOP0.pipe2.dpath.src_y_S2_f);
-
+        $display("TILE0 L2++++++++++++++++++++++++++++++++++");
     end
     if (`L2_TOP0.pipe2.ctrl.valid_S3  && ~`L2_TOP0.pipe2.ctrl.stall_S3)
     begin
-        $display("TILE0-------------------------------------");
+        $display("TILE0 L2----------------------------------");
         $display($time);
         `ifndef NO_RTL_CSM
         $display("SMC miss: %b", `L2_TOP0.pipe2.ctrl.smc_miss_S3_f);
@@ -337,6 +341,7 @@ begin
             $display("MSHR inc inv counter: %d", `L2_TOP0.pipe1.dpath.mshr_inv_counter_out_S4);
         end
         $display("State wr en: %b", `L2_TOP0.pipe2.ctrl.state_wr_en_S3);
+        $display("TILE0 L2++++++++++++++++++++++++++++++++++");
     end
 
 
