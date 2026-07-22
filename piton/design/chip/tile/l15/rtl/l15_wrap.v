@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This module wraps the L1.5 and ties unused signals
 
 `include "l15.tmp.h"
+`include "maw_define.vh"    // MAW: slice mask width
 
 module l15_wrap (
     input                                   clk,
@@ -82,6 +83,10 @@ module l15_wrap (
     input [`NOC_DATA_WIDTH-1:0]             noc2_in_data,
     input                                   noc3_out_rdy,
     input                                   dmbr_l15_stall,
+    input                                   maw_func_en,
+    input [`MAW_NUM_SLICES-1:0]             maw_cur_slot_mask,
+    input                                   maw_priv_is_m,
+    input                                   maw_gate_mmode,
     input [`NOC_CHIPID_WIDTH-1:0]           chipid,
     input [`NOC_X_WIDTH-1:0]                coreid_x,
     input [`NOC_Y_WIDTH-1:0]                coreid_y,
@@ -171,6 +176,10 @@ module l15_wrap (
         .noc2_in_data(noc2_in_data),
         .noc3_out_rdy(noc3_out_rdy),
         .dmbr_l15_stall(dmbr_l15_stall),
+        .maw_func_en(maw_func_en),
+        .maw_cur_slot_mask(maw_cur_slot_mask),
+        .maw_priv_is_m(maw_priv_is_m),
+        .maw_gate_mmode(maw_gate_mmode),
         .chipid(chipid),
         .coreid_x(coreid_x),
         .coreid_y(coreid_y),

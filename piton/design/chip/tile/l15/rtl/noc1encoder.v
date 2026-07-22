@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //==================================================================================================
 `include "l15.tmp.h"
 `include "define.tmp.h"
+`include "maw_define.vh"    // MAW: schedule geometry / slice mask width
 
 `ifdef DEFAULT_NETTYPE_NONE
 `default_nettype none
@@ -81,6 +82,22 @@ module noc1encoder(
    output reg                       l15_dmbr_l1missIn,
    output reg [`DMBR_TAG_WIDTH-1:0] l15_dmbr_l1missTag,
 
+   // MAW interface: current-slot allowed-destination mask + enable, from the
+   // per-tile maw_ctrl (routed through l15).  The single-bit lookup below
+   // gates only core-originated (L15) NoC1 request injection.
+   input wire                         maw_func_en,
+   input wire [`MAW_NUM_SLICES-1:0]   maw_cur_slot_mask,
+   // MAW privilege bypass: high when the core is in machine mode.  The kernel
+   // (S3K, M-mode) must never stall on a gated access (it would block the
+   // in-order pipeline and the timer interrupt for up to a schedule period).
+   // So injection is never gated while in M-mode; gating applies to U-mode
+   // (domain) traffic only.  See MAW_KERNEL_OPERATION.md.
+   input wire                         maw_priv_is_m,
+   // Configurable: when high, gate machine-mode traffic too (disable the
+   // bypass).  Default low = bypass on (S3K).  Set for bare-metal, no-OS
+   // experiments that want to observe gating in M-mode.
+   input wire                         maw_gate_mmode,
+
    // csm interface
    input wire csm_noc1encoder_req_val,
    input wire [`L15_NOC1_REQTYPE_WIDTH-1:0] csm_noc1encoder_req_type,
@@ -98,6 +115,12 @@ reg [`NOC1_FLIT_STATE_WIDTH-1:0] flit_state_next;
 reg sending;
 reg dmbr_stall;
 reg control_raw_data_flit1;
+
+// MAW: destination slice of the pending L15 request and the resulting gate.
+// The home id names the destination home slice; take its low bits as the slice
+// index (must match the mesh home->slice extraction).
+wire [`MAW_SLICE_IDX_WIDTH-1:0] maw_req_slice = noc1buffer_noc1encoder_req_homeid[`MAW_SLICE_IDX_WIDTH-1:0];
+reg maw_stall;
 
 always @ (posedge clk)
 begin
@@ -120,7 +143,20 @@ begin
 
    // sending throttle for dmbr
    dmbr_stall = dmbr_l15_stall && (flit_state == 0); // let's not stall in the middle of a msg
-   sending = (noc1buffer_noc1encoder_req_val || csm_noc1encoder_req_val) && !dmbr_stall;
+
+   // MAW: per-destination window gate.  Hold a new core-originated (L15)
+   // request at the source (in L1.5) when its home slice's window is closed
+   // in the current slot.  Only acts at a message boundary (flit_state == 0),
+   // so it never chops a packet in flight; csm/coherence traffic is not gated;
+   // NoC2/NoC3 are untouched -> deadlock freedom preserved.
+   maw_stall = maw_func_en
+               && noc1buffer_noc1encoder_req_val
+               && (flit_state == 0)
+               && !maw_cur_slot_mask[maw_req_slice]
+               && !(maw_priv_is_m && !maw_gate_mmode); // bypass M-mode unless configured to gate it
+
+   sending = (noc1buffer_noc1encoder_req_val || csm_noc1encoder_req_val)
+             && !dmbr_stall && !maw_stall;
    noc1encoder_noc1out_val = sending;
 
 end

@@ -35,6 +35,7 @@ set GLOBAL_INCLUDE_FILES [list \
     "${DV_ROOT}/design/include/define.h" \
     "${DV_ROOT}/design/include/piton_system.vh" \
     "${DV_ROOT}/design/include/dmbr_define.v" \
+    "${DV_ROOT}/design/include/maw_define.vh" \
     "${DV_ROOT}/design/include/l15.h" \
     "${DV_ROOT}/design/include/l2.h" \
     "${DV_ROOT}/design/include/network_define.v" \
@@ -86,6 +87,7 @@ set CHIP_RTL_IMPL_FILES [list \
     "${DV_ROOT}/design/chip/chip_bridge/rtl/sync_fifo.v" \
     "${DV_ROOT}/design/chip/chip_bridge/rtl/chip_net_chooser_32.v" \
     "${DV_ROOT}/design/chip/tile/dmbr/rtl/dmbr.v" \
+    "${DV_ROOT}/design/chip/tile/maw/rtl/maw_ctrl.v" \
     "${DV_ROOT}/design/chip/tile/rtl/tile.v" \
     "${DV_ROOT}/design/chip/tile/rtl/config_regs.v" \
     "${DV_ROOT}/design/chip/tile/l2/rtl/l2.v" \

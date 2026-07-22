@@ -406,7 +406,13 @@ print("`define L2_STATE_ARRAY_HEIGHT_LOG2     %d" % (math.log(L2_NUM_SETS,2)))
 `define L2_ADDR_TYPE_ACCESS_COUNTER 8'haa
 `define L2_ADDR_TYPE_MISS_COUNTER   8'hab
 `define L2_ADDR_TYPE_LINE_FLUSH     8'ha3
-`define L2_ADDR_TYPE_DIS_FLUSH      8'hac, 8'had, 8'hae, 8'haf
+// MAW: reclaim two spare DIS_FLUSH aliases (0xad, 0xae) for the Memory Access
+// Window config/status registers.  They stay in the 0xA special-L2 range, so
+// the L1.5 routing and per-tile home targeting already work unchanged; a
+// monitor addresses a specific tile's MAW by aiming the home bits at that tile.
+`define L2_ADDR_TYPE_DIS_FLUSH      8'hac, 8'haf
+`define L2_ADDR_TYPE_MAW_CTRL       8'had
+`define L2_ADDR_TYPE_MAW_SCHED      8'hae
 
 
 //L2 core ID

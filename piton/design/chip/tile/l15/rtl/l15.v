@@ -43,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //`timescale 1 ns / 10 ps
 `include "l15.tmp.h"
 `include "lsu.tmp.h"
+`include "maw_define.vh"    // MAW: slice mask width
 
 `ifdef DEFAULT_NETTYPE_NONE
 `default_nettype none
@@ -108,8 +109,14 @@ module l15 (
     input [63:0]                            config_l15_read_res_data_s3,
     input                                   config_csm_en,
     input [31:0]                            config_system_tile_count,
-    input [`HOME_ALLOC_METHOD_WIDTH-1:0]    config_home_alloc_method, 
+    input [`HOME_ALLOC_METHOD_WIDTH-1:0]    config_home_alloc_method,
     input [`L15_HMT_BASE_ADDR_WIDTH-1:0]    config_hmt_base,
+
+    // MAW: current-slot allowed-destination mask + enable, from tile maw_ctrl
+    input                                   maw_func_en,
+    input [`MAW_NUM_SLICES-1:0]             maw_cur_slot_mask,
+    input                                   maw_priv_is_m,  // core in machine mode
+    input                                   maw_gate_mmode, // config: gate M-mode too
 
     output                                  noc1_out_val,
     output [`NOC_DATA_WIDTH-1:0]            noc1_out_data,
@@ -949,6 +956,10 @@ noc1encoder noc1encoder(
     .noc1buffer_noc1encoder_req_homeid(noc1buffer_noc1encoder_req_homeid),
     
     .dmbr_l15_stall(dmbr_l15_stall),
+    .maw_func_en(maw_func_en),
+    .maw_cur_slot_mask(maw_cur_slot_mask),
+    .maw_priv_is_m(maw_priv_is_m),
+    .maw_gate_mmode(maw_gate_mmode),
     .chipid(chipid),
     .coreid_x(coreid_x),
     .coreid_y(coreid_y),

@@ -27,3 +27,7 @@
 
 config_regs.v
 tile.v
+
+// MAW: per-tile Memory Access Window controller (instantiated in tile.v).
+// maw_define.vh lives in design/include.
+../maw/rtl/maw_ctrl.v

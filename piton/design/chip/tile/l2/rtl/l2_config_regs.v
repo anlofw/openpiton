@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 `include "l2.tmp.h"
 `include "define.tmp.h"
+`include "maw_define.vh"    // MAW: config-word bit fields (shared with the model)
 
 module l2_config_regs(
 
@@ -65,7 +66,23 @@ module l2_config_regs(
     output reg [`NOC_NODEID_WIDTH-1:0] my_nodeid,
     output reg [`L2_COREID_WIDTH-1:0] core_max,
     output reg csm_en,
-    output reg [`L2_SMT_BASE_ADDR_WIDTH-1:0] smt_base_addr
+    output reg [`L2_SMT_BASE_ADDR_WIDTH-1:0] smt_base_addr,
+
+    // MAW: remotely-writable schedule config/control -> this tile's maw_ctrl.
+    // Reached over the NoC by a store to a MAW_CTRL/MAW_SCHED special address
+    // whose home bits select this tile, so a single monitor can program every
+    // tile.  sched_wr/commit are 1-cycle pulses driven on the config write.
+    output wire                            config_maw_func_en,
+    output wire                            config_maw_gate_mmode,  // 1 = gate M-mode too
+    output wire [`MAW_SLOT_DUR_WIDTH-1:0]  config_maw_slot_dur,
+    output wire                            config_maw_sched_wr,
+    output wire [`MAW_SLOT_IDX_WIDTH-1:0]  config_maw_sched_slot,
+    output wire [`MAW_NUM_SLICES-1:0]      config_maw_sched_mask,
+    output wire                            config_maw_commit,
+    output wire [`MAW_SLICE_IDX_WIDTH-1:0] config_maw_status_sel,
+    // MAW status back from maw_ctrl (for MAW_CTRL read-back)
+    input  wire [`MAW_SLOT_IDX_WIDTH-1:0]  from_maw_cur_slot,
+    input  wire [`MAW_TREMAIN_WIDTH-1:0]   from_maw_t_remain
 
 );
 
@@ -85,15 +102,42 @@ reg error_status_en;
 reg l2_access_counter_inc_en;
 reg l2_miss_counter_inc_en;
 
+// MAW: persistent control word (func_en/slot_dur/status_sel) + write strobes.
+reg [`L2_REG_WIDTH-1:0] maw_ctrl_reg_f;
+reg maw_ctrl_reg_wr_en;
+
 always @ *
 begin
-    ctrl_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_CTRL_REG); 
-    coreid_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_COREID_REG); 
-    l2_access_counter_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_ACCESS_COUNTER); 
-    l2_miss_counter_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_MISS_COUNTER); 
-    error_status_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_ERROR_STATUS_REG); 
-    
+    ctrl_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_CTRL_REG);
+    coreid_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_COREID_REG);
+    l2_access_counter_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_ACCESS_COUNTER);
+    l2_miss_counter_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_MISS_COUNTER);
+    error_status_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_ERROR_STATUS_REG);
+    maw_ctrl_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_MAW_CTRL);
 end
+
+// MAW_CTRL holds func_en/slot_dur/status_sel persistently.
+always @ (posedge clk)
+begin
+    if (!rst_n)
+        maw_ctrl_reg_f <= {`L2_REG_WIDTH{1'b0}};
+    else if (maw_ctrl_reg_wr_en)
+        maw_ctrl_reg_f <= reg_data_in;
+end
+
+// Persistent config fields.
+assign config_maw_func_en    = maw_ctrl_reg_f[`CFG_MAW_FUNC_EN_BIT];
+assign config_maw_gate_mmode = maw_ctrl_reg_f[`CFG_MAW_MMODE_GATE_BIT];
+assign config_maw_slot_dur   = maw_ctrl_reg_f[`CFG_MAW_SLOT_DUR_BITS];
+assign config_maw_status_sel = maw_ctrl_reg_f[`CFG_MAW_STATUS_SEL_BITS];
+
+// Pulses: high only on the cycle the corresponding store retires in the pipe.
+assign config_maw_commit   = maw_ctrl_reg_wr_en && reg_data_in[`CFG_MAW_COMMIT_BIT];
+assign config_maw_sched_wr = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_MAW_SCHED);
+
+// Schedule-row write payload (valid on the sched_wr pulse cycle).
+assign config_maw_sched_slot = reg_data_in[`CFG_MAW_SCHED_SLOT_BITS];
+assign config_maw_sched_mask = reg_data_in[`CFG_MAW_SCHED_MASK_BITS];
 
 always @ (posedge clk)
 begin
@@ -223,6 +267,12 @@ begin
         else if (reg_rd_addr_type == `L2_ADDR_TYPE_ERROR_STATUS_REG)
         begin
             reg_data_out = error_status_reg_f;
+        end
+        else if (reg_rd_addr_type == `L2_ADDR_TYPE_MAW_CTRL)
+        begin
+            // { cur_slot, T_remain } for the slice selected via CFG_MAW_STATUS_SEL
+            reg_data_out = { {(`L2_REG_WIDTH-`MAW_TREMAIN_WIDTH-`MAW_SLOT_IDX_WIDTH){1'b0}},
+                             from_maw_cur_slot, from_maw_t_remain };
         end
         else
         begin

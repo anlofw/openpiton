@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 `include "l2.tmp.h"
 `include "define.tmp.h"
+`include "maw_define.vh"    // MAW: config/status port widths
 
 module l2(
 
@@ -62,6 +63,19 @@ module l2(
     output wire noc2_valid_out,
     output wire [`NOC_DATA_WIDTH-1:0] noc2_data_out,
     input wire noc2_ready_out,
+
+    // MAW: schedule config/status <-> tile-level maw_ctrl (passed through from
+    // l2_config_regs; remotely programmable via MAW_CTRL/MAW_SCHED addresses)
+    output wire                            config_maw_func_en,
+    output wire                            config_maw_gate_mmode,
+    output wire [`MAW_SLOT_DUR_WIDTH-1:0]  config_maw_slot_dur,
+    output wire                            config_maw_sched_wr,
+    output wire [`MAW_SLOT_IDX_WIDTH-1:0]  config_maw_sched_slot,
+    output wire [`MAW_NUM_SLICES-1:0]      config_maw_sched_mask,
+    output wire                            config_maw_commit,
+    output wire [`MAW_SLICE_IDX_WIDTH-1:0] config_maw_status_sel,
+    input  wire [`MAW_SLOT_IDX_WIDTH-1:0]  maw_cur_slot,
+    input  wire [`MAW_TREMAIN_WIDTH-1:0]   maw_t_remain,
 
     // sram interface
     output wire [`SRAM_WRAPPER_BUS_WIDTH-1:0] srams_rtap_data,
@@ -291,7 +305,19 @@ l2_config_regs config_regs(
     `else
     .csm_en                 (),
     `endif
-    .smt_base_addr          (smt_base_addr)
+    .smt_base_addr          (smt_base_addr),
+
+    // MAW config/status pass-through
+    .config_maw_func_en     (config_maw_func_en),
+    .config_maw_gate_mmode  (config_maw_gate_mmode),
+    .config_maw_slot_dur    (config_maw_slot_dur),
+    .config_maw_sched_wr    (config_maw_sched_wr),
+    .config_maw_sched_slot  (config_maw_sched_slot),
+    .config_maw_sched_mask  (config_maw_sched_mask),
+    .config_maw_commit      (config_maw_commit),
+    .config_maw_status_sel  (config_maw_status_sel),
+    .from_maw_cur_slot      (maw_cur_slot),
+    .from_maw_t_remain      (maw_t_remain)
 
 );
 

@@ -176,7 +176,7 @@ begin
       hmt_base <= `L15_HMT_BASE_ADDR_WIDTH'b0;
       csm_en <= 1'b0;
       system_tile_count <= default_total_num_tiles;
-      home_alloc_method <= `HOME_ALLOC_MIXED_ORDER_BITS;
+      home_alloc_method <= `HOME_ALLOC_MIDDLE_ORDER_BITS;
       chipid <= default_chipid;
       coreid_x <= default_coreid_x;
       coreid_y <= default_coreid_y;

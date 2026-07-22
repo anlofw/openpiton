@@ -1,0 +1,6 @@
+// ========== Copyright Header Begin ============================================
+// MAW (Memory Access Window) controller file list.
+// Part of the MAW port to OpenPiton + S3K.
+// ========== Copyright Header End ============================================
+
+maw_ctrl.v

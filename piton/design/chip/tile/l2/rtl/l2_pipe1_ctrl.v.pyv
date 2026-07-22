@@ -691,7 +691,9 @@ begin
     ||   addr_type_S1 == `L2_ADDR_TYPE_MISS_COUNTER
     ||   addr_type_S1 == `L2_ADDR_TYPE_COREID_REG
     ||   addr_type_S1 == `L2_ADDR_TYPE_ERROR_STATUS_REG
-    ||   addr_type_S1 == `L2_ADDR_TYPE_CTRL_REG))
+    ||   addr_type_S1 == `L2_ADDR_TYPE_CTRL_REG
+    ||   addr_type_S1 == `L2_ADDR_TYPE_MAW_CTRL      // MAW config/status
+    ||   addr_type_S1 == `L2_ADDR_TYPE_MAW_SCHED))   // MAW shadow schedule row
     begin
         special_addr_type_S1 = 1'b1;
     end
@@ -894,6 +896,8 @@ begin
                 || (addr_type_S1 == `L2_ADDR_TYPE_COREID_REG)
                 || (addr_type_S1 == `L2_ADDR_TYPE_ERROR_STATUS_REG)
                 || (addr_type_S1 == `L2_ADDR_TYPE_ACCESS_COUNTER)
+                || (addr_type_S1 == `L2_ADDR_TYPE_MAW_CTRL)
+                || (addr_type_S1 == `L2_ADDR_TYPE_MAW_SCHED)
                 || (addr_type_S1 == `L2_ADDR_TYPE_MISS_COUNTER));
 end
 
@@ -4278,6 +4282,7 @@ begin
                 || (addr_type_S4 == `L2_ADDR_TYPE_COREID_REG)
                 || (addr_type_S4 == `L2_ADDR_TYPE_ERROR_STATUS_REG)
                 || (addr_type_S4 == `L2_ADDR_TYPE_ACCESS_COUNTER)
+                || (addr_type_S4 == `L2_ADDR_TYPE_MAW_CTRL)     // MAW status read
                 || (addr_type_S4 == `L2_ADDR_TYPE_MISS_COUNTER));
 end
 

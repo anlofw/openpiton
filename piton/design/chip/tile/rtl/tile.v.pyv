@@ -25,6 +25,7 @@
 
 `include "define.tmp.h"
 `include "dmbr_define.v"
+`include "maw_define.vh"
 `include "l15.tmp.h"
 `include "jtag.vh"
 <%
@@ -355,6 +356,36 @@ print(s)
     wire [31:0]                         config_system_tile_count;
     wire [`HOME_ALLOC_METHOD_WIDTH-1:0] config_home_alloc_method;
     wire [`L15_HMT_BASE_ADDR_WIDTH-1:0] config_hmt_base;
+
+    // MAW: config_regs <-> maw_ctrl <-> l15 (see maw/rtl/maw_ctrl.v)
+    wire                            config_maw_func_en;
+    wire [`MAW_SLOT_DUR_WIDTH-1:0]  config_maw_slot_dur;
+    wire                            config_maw_sched_wr;
+    wire [`MAW_SLOT_IDX_WIDTH-1:0]  config_maw_sched_slot;
+    wire [`MAW_NUM_SLICES-1:0]      config_maw_sched_mask;
+    wire                            config_maw_commit;
+    wire [`MAW_SLICE_IDX_WIDTH-1:0] config_maw_status_sel;
+    wire                            maw_func_en;
+    wire [`MAW_NUM_SLICES-1:0]      maw_cur_slot_mask;
+    wire [`MAW_SLOT_IDX_WIDTH-1:0]  maw_cur_slot;
+    wire [`MAW_TREMAIN_WIDTH-1:0]   maw_t_remain;
+
+    // MAW privilege bypass: never gate machine-mode (kernel) injection.
+    // core_priv_lvl is the core's current RISC-V privilege, sourced from the
+    // CVA6 core's priv_lvl_o (routed out through ariane_verilog_wrap). M = 2'b11.
+    wire [1:0] core_priv_lvl;                           // driven by ariane_verilog_wrap .priv_lvl_o
+    wire maw_priv_is_m = (core_priv_lvl == 2'b11);      // RISC-V PRV_M = 3
+
+    // MAW config now sourced from the L2 config-register space (remotely
+    // programmable by a monitor via MAW_CTRL/MAW_SCHED special addresses).
+    wire                            l2_maw_func_en;
+    wire                            l2_maw_gate_mmode;
+    wire [`MAW_SLOT_DUR_WIDTH-1:0]  l2_maw_slot_dur;
+    wire                            l2_maw_sched_wr;
+    wire [`MAW_SLOT_IDX_WIDTH-1:0]  l2_maw_sched_slot;
+    wire [`MAW_NUM_SLICES-1:0]      l2_maw_sched_mask;
+    wire                            l2_maw_commit;
+    wire [`MAW_SLICE_IDX_WIDTH-1:0] l2_maw_status_sel;
 
 
     // SRAM wrapper interfaces
@@ -966,6 +997,7 @@ print(str)
         .ipi_i       ( ipi_i                  ),
         .time_irq_i  ( timer_irq_i            ),
         .debug_req_i ( debug_req_i            ),
+        .priv_lvl_o  ( core_priv_lvl          ),   // MAW: current privilege -> gate bypass
         .l15_req_o   ( l15_req                ),
         .l15_rtrn_i  ( l15_rtrn               )
     );
@@ -1036,6 +1068,10 @@ print(str)
         .noc2_in_data(buffer_processor_data_noc2),
         .noc3_out_rdy(router_processor_ready_noc3),
         .dmbr_l15_stall(dmbr_l15_stall),
+        .maw_func_en(maw_func_en),
+        .maw_cur_slot_mask(maw_cur_slot_mask),
+        .maw_priv_is_m(maw_priv_is_m),
+        .maw_gate_mmode(l2_maw_gate_mmode),
         .chipid(config_chipid),
         .coreid_x(config_coreid_x),
         .coreid_y(config_coreid_y),
@@ -1114,6 +1150,35 @@ print(str)
         .stallOut             (dmbr_l15_stall           )
     );
 
+    /////////
+    // MAW //
+    /////////
+    // Per-tile Memory Access Window schedule engine.  Exports the current
+    // slot's allowed-destination mask to l15/noc1encoder, where the single-bit
+    // per-request injection gate lives.
+    //
+    // maw_epoch: global major-frame phase reset (S3K keeps per-hart frames
+    // time-aligned).  Prototype stop-gap = 1'b0 -> the schedule free-runs from
+    // reset; on a small mesh where all tiles leave reset together this keeps
+    // them phase-aligned.  Replace with an RTC/mtime frame-boundary pulse for a
+    // multi-tile deployment.
+    maw_ctrl maw_ins (
+        .clk            (clk_gated              ),
+        .rst_n          (rst_n_f                ),
+        .maw_epoch      (1'b0                   ),
+        .cfg_func_en    (l2_maw_func_en         ),
+        .cfg_slot_dur   (l2_maw_slot_dur        ),
+        .cfg_sched_wr   (l2_maw_sched_wr        ),
+        .cfg_sched_slot (l2_maw_sched_slot      ),
+        .cfg_sched_mask (l2_maw_sched_mask      ),
+        .cfg_commit     (l2_maw_commit          ),
+        .cfg_status_sel (l2_maw_status_sel      ),
+        .func_en_out    (maw_func_en            ),
+        .cur_slot_mask  (maw_cur_slot_mask      ),
+        .cur_slot       (maw_cur_slot           ),
+        .t_remain       (maw_t_remain           )
+    );
+
     ////////
     // L2 //
     ////////
@@ -1134,6 +1199,18 @@ print(str)
         .noc3_ready_in(processor_router_ready_noc3),
         .noc2_valid_out(processor_router_valid_noc2),
         .noc2_data_out(processor_router_data_noc2),
+
+        // MAW: schedule config/status (remotely programmable via NoC)
+        .config_maw_func_en    (l2_maw_func_en),
+        .config_maw_gate_mmode (l2_maw_gate_mmode),
+        .config_maw_slot_dur   (l2_maw_slot_dur),
+        .config_maw_sched_wr   (l2_maw_sched_wr),
+        .config_maw_sched_slot (l2_maw_sched_slot),
+        .config_maw_sched_mask (l2_maw_sched_mask),
+        .config_maw_commit     (l2_maw_commit),
+        .config_maw_status_sel (l2_maw_status_sel),
+        .maw_cur_slot          (maw_cur_slot),
+        .maw_t_remain          (maw_t_remain),
 
         // interface to srams
         .srams_rtap_data (l2_rtap_data),
@@ -1183,6 +1260,7 @@ print(str)
         .config_csm_en                (config_csm_en                ),
         .config_system_tile_count     (config_system_tile_count     ),
         .config_home_alloc_method     (config_home_alloc_method     ),
+
         .config_chipid                (config_chipid                ),
         .config_coreid_x              (config_coreid_x              ),
         .config_coreid_y              (config_coreid_y              ),
