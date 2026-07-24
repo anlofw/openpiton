@@ -1162,6 +1162,7 @@ print(str)
     // reset; on a small mesh where all tiles leave reset together this keeps
     // them phase-aligned.  Replace with an RTC/mtime frame-boundary pulse for a
     // multi-tile deployment.
+`ifdef MAW_EN
     maw_ctrl maw_ins (
         .clk            (clk_gated              ),
         .rst_n          (rst_n_f                ),
@@ -1178,6 +1179,13 @@ print(str)
         .cur_slot       (maw_cur_slot           ),
         .t_remain       (maw_t_remain           )
     );
+`else
+    // MAW compiled out (baseline): gate inert, all destinations open.
+    assign maw_func_en      = 1'b0;
+    assign maw_cur_slot_mask = {`MAW_NUM_SLICES{1'b1}};
+    assign maw_cur_slot     = {`MAW_SLOT_IDX_WIDTH{1'b0}};
+    assign maw_t_remain     = {`MAW_TREMAIN_WIDTH{1'b0}};
+`endif
 
     ////////
     // L2 //

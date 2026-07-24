@@ -103,8 +103,10 @@ reg l2_access_counter_inc_en;
 reg l2_miss_counter_inc_en;
 
 // MAW: persistent control word (func_en/slot_dur/status_sel) + write strobes.
+`ifdef MAW_EN
 reg [`L2_REG_WIDTH-1:0] maw_ctrl_reg_f;
 reg maw_ctrl_reg_wr_en;
+`endif
 
 always @ *
 begin
@@ -113,9 +115,12 @@ begin
     l2_access_counter_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_ACCESS_COUNTER);
     l2_miss_counter_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_MISS_COUNTER);
     error_status_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_ERROR_STATUS_REG);
+`ifdef MAW_EN
     maw_ctrl_reg_wr_en = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_MAW_CTRL);
+`endif
 end
 
+`ifdef MAW_EN
 // MAW_CTRL holds func_en/slot_dur/status_sel persistently.
 always @ (posedge clk)
 begin
@@ -138,6 +143,18 @@ assign config_maw_sched_wr = reg_wr_en && (reg_wr_addr_type == `L2_ADDR_TYPE_MAW
 // Schedule-row write payload (valid on the sched_wr pulse cycle).
 assign config_maw_sched_slot = reg_data_in[`CFG_MAW_SCHED_SLOT_BITS];
 assign config_maw_sched_mask = reg_data_in[`CFG_MAW_SCHED_MASK_BITS];
+`else
+// MAW compiled out (baseline): drive the (unused) outputs with constants so
+// they optimize away; no maw_ctrl_reg_f, so no added registers.
+assign config_maw_func_en    = 1'b0;
+assign config_maw_gate_mmode = 1'b0;
+assign config_maw_slot_dur   = {`MAW_SLOT_DUR_WIDTH{1'b0}};
+assign config_maw_status_sel = {`MAW_SLICE_IDX_WIDTH{1'b0}};
+assign config_maw_commit     = 1'b0;
+assign config_maw_sched_wr   = 1'b0;
+assign config_maw_sched_slot = {`MAW_SLOT_IDX_WIDTH{1'b0}};
+assign config_maw_sched_mask = {`MAW_NUM_SLICES{1'b0}};
+`endif
 
 always @ (posedge clk)
 begin
@@ -268,12 +285,14 @@ begin
         begin
             reg_data_out = error_status_reg_f;
         end
+`ifdef MAW_EN
         else if (reg_rd_addr_type == `L2_ADDR_TYPE_MAW_CTRL)
         begin
             // { cur_slot, T_remain } for the slice selected via CFG_MAW_STATUS_SEL
             reg_data_out = { {(`L2_REG_WIDTH-`MAW_TREMAIN_WIDTH-`MAW_SLOT_IDX_WIDTH){1'b0}},
                              from_maw_cur_slot, from_maw_t_remain };
         end
+`endif
         else
         begin
             reg_data_out = 0;

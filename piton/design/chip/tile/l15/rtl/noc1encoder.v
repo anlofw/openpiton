@@ -149,11 +149,15 @@ begin
    // in the current slot.  Only acts at a message boundary (flit_state == 0),
    // so it never chops a packet in flight; csm/coherence traffic is not gated;
    // NoC2/NoC3 are untouched -> deadlock freedom preserved.
+`ifdef MAW_EN
    maw_stall = maw_func_en
                && noc1buffer_noc1encoder_req_val
                && (flit_state == 0)
                && !maw_cur_slot_mask[maw_req_slice]
                && !(maw_priv_is_m && !maw_gate_mmode); // bypass M-mode unless configured to gate it
+`else
+   maw_stall = 1'b0;
+`endif
 
    sending = (noc1buffer_noc1encoder_req_val || csm_noc1encoder_req_val)
              && !dmbr_stall && !maw_stall;

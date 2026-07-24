@@ -10,6 +10,15 @@
 
 `include "define.tmp.h"
 
+// ---- Build switch ----------------------------------------------------------
+// MAW logic is compiled in by default. For a BASELINE bitstream (to measure
+// MAW hardware overhead as a diff), synthesize with +define+MAW_DISABLE, which
+// leaves out all MAW logic (the gate, maw_ctrl, and the L2 MAW registers);
+// module ports remain but are driven with constants and optimize away.
+`ifndef MAW_DISABLE
+`define MAW_EN
+`endif
+
 // ---- Schedule geometry -----------------------------------------------------
 // Number of slots L in the circular schedule (period P = L * tau).
 `define MAW_NUM_SLOTS        64
