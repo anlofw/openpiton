@@ -2112,6 +2112,9 @@ begin
               || addr_S4[`L2_ADDR_TYPE] == `L2_ADDR_TYPE_COREID_REG
               || addr_S4[`L2_ADDR_TYPE] == `L2_ADDR_TYPE_ERROR_STATUS_REG
               || addr_S4[`L2_ADDR_TYPE] == `L2_ADDR_TYPE_ACCESS_COUNTER
+`ifdef MAW_EN
+              || addr_S4[`L2_ADDR_TYPE] == `L2_ADDR_TYPE_MAW_CTRL
+`endif
               || addr_S4[`L2_ADDR_TYPE] == `L2_ADDR_TYPE_MISS_COUNTER)
         begin
             msg_send_data_S4 = {2{reg_data_out_S4}};

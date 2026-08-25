@@ -884,6 +884,10 @@ begin
                   ||  addr_type_S1 == `L2_ADDR_TYPE_ERROR_STATUS_REG
                   ||  addr_type_S1 == `L2_ADDR_TYPE_ACCESS_COUNTER
                   ||  addr_type_S1 == `L2_ADDR_TYPE_MISS_COUNTER
+`ifdef MAW_EN
+                  ||  addr_type_S1 == `L2_ADDR_TYPE_MAW_CTRL
+                  ||  addr_type_S1 == `L2_ADDR_TYPE_MAW_SCHED
+`endif
                   ||  addr_type_S1 == `L2_ADDR_TYPE_TAG_ACCESS);
 end
 
