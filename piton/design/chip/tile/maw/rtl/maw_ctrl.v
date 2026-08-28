@@ -94,7 +94,7 @@ module maw_ctrl (
             if (cfg_commit)
                 commit_pend <= 1'b1;
 
-            if (slot_boundary && commit_pend) begin
+            if (slot_boundary && (slot_idx == SLOT_MAX) && commit_pend) begin
                 for (i = 0; i < `MAW_NUM_SLOTS; i = i + 1)
                     active_sched[i] <= shadow_sched[i];
                 commit_pend <= 1'b0;
