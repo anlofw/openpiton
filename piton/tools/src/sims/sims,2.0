@@ -187,7 +187,7 @@ Getopt::Long::Configure ('no_auto_abbrev') ;
         'result_dir' => "",
         'riv_build' => 0,
         'riv_build_args' => [],
-        'riv_run' => 0,		
+        'riv_run' => 0,
         'rtl_timeout' => 5000,
         'run_diag_pl' => 1,
         'rv32' => 0,
@@ -208,6 +208,7 @@ Getopt::Long::Configure ('no_auto_abbrev') ;
         'sim_type' => "vcs",
         'sim_q_command' => "/bin/sh",
         'sims_config' => "",
+        'simlog' => 1,
         'simslog' => 1,
         'simslog_name' => "sims.log",
         'sparcv9' => 0,
@@ -339,11 +340,14 @@ GetOptions (\%opt,
             'sim_type=s',
             'sim_q_command=s',
             'sims_config=s',
+            'simlog!',
             'simslog!',
             'simslog_name=s',
             'build_id=s',
             'sys=s',
            ) ;
+
+$opt{simslog} = 0 if !$opt{simlog} ;
 
 die ("DIE. -ariane and -pico/-pico_het cannot be set simultaneously") if ($opt{ariane} && ($opt{pico} || $opt{pico_het})) ;
 die ("DIE. -pico and -pico_het cannot both be set") if ($opt{pico} && $opt{pico_het}) ;
@@ -1526,7 +1530,7 @@ sub generic_sim_build
     if ($opt{riv_build}) {
       $build_cmd = "vlib work; vlog " ;
     }
-	
+
     if ($opt{vlt_build}) {
       $build_cmd = "verilator -cc " ;
 #      $build_cmd = "verilator -cc --trace " ;
@@ -1771,7 +1775,7 @@ sub generic_sim_run
       $cmd .= join (" ", @{$opt{sim_run_args}}) ;
       print("====================================\n$cmd\n====================================");
     }
-	
+
 if ($opt{riv_run}) {
     if (!$opt{gui}) {
         $cmd .= "vsimsa" ;
@@ -1779,7 +1783,7 @@ if ($opt{riv_run}) {
 		$cmd .= "-do \" vsim ";
 		$cmd .= "-lib ";
 		$cmd .= "$model_path/work ";
-		
+
 
 		foreach my $top_n (@{$opt{toplevel}}) {
 			$cmd .= "$top_n ";
@@ -1813,8 +1817,8 @@ if ($opt{riv_run}) {
       $cmd .= " " ;
       $cmd .= join (" ", @{$opt{sim_run_args}}) ;
       print("====================================\n$cmd\n====================================");
-	 } 
-    }	
+	 }
+    }
 
     if ($opt{vlt_run}) {
       $cmd .= "$model_path/obj_dir/Vcmp_top " ;
@@ -1870,8 +1874,8 @@ if ($opt{riv_run}) {
     if ($opt{riv_run}) {
       if (!defined($ENV{RIVIERA_HOME})) { die ("DIE. RIVIERA_HOME not defined.") }
       print "$prg: RIVIERA_HOME is $ENV{RIVIERA_HOME}\n";
-    }	
-	
+    }
+
     if ($ENV{LM_LICENSE_FILE}) {
       print "$prg: LM_LICENSE_FILE : $ENV{LM_LICENSE_FILE}\n";
     } else {
@@ -2395,7 +2399,9 @@ sub call_program {
 
   while(<PROGFH>) {
     print;
-    print TEE;
+    if ($opt{simlog}) {
+      print TEE;
+    }
   }
 
   close( TEE );
@@ -2578,6 +2584,7 @@ sub parse_args
             'sim_type=s',
             'sim_q_command=s',
             'sims_config=s',
+            'simlog!',
             'simslog!',
             'simslog_name=s',
             'sparcv9!',
@@ -2626,6 +2633,8 @@ sub parse_args
             'pico!',
             'pico_het!',
            );
+
+  $opt{simslog} = 0 if !$opt{simlog} ;
 
   # print out all command line arguments + config arguments
   # if debugging is enabled
@@ -2997,8 +3006,8 @@ VERILOG COMPILATION RELATED
 
     -riv_build_args=OPTION
            riviera compile options. multiple options can be specified using
-           multiple such arguments.		   
-		   
+           multiple such arguments.
+
     -vlt_build/-novlt_build
            builds a verilator model. defaults to off.
 
@@ -3360,10 +3369,10 @@ Build an icarus model using DV_ROOT as design root
 Build a modelsim model using DV_ROOT as design root
 
   sims -sys=manycore -x_tiles=1 -y_tiles=1 -msm_build
-  
+
 Build a riviera model using DV_ROOT as design root
 
-  sims -sys=manycore -x_tiles=1 -y_tiles=1 -riv_build  
+  sims -sys=manycore -x_tiles=1 -y_tiles=1 -riv_build
 
 Build a verilator model using DV_ROOT as design root
 
