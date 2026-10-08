@@ -117,9 +117,18 @@ reg dmbr_stall;
 reg control_raw_data_flit1;
 
 // MAW: destination slice of the pending L15 request and the resulting gate.
-// The home id names the destination home slice; take its low bits as the slice
-// index (must match the mesh home->slice extraction).
-wire [`MAW_SLICE_IDX_WIDTH-1:0] maw_req_slice = noc1buffer_noc1encoder_req_homeid[`MAW_SLICE_IDX_WIDTH-1:0];
+// The schedule mask (sigma) is programmed by software with the FLAT home id (the
+// slice / LHID).
+// We key the gate off the encoder's OWN destination position, msg_dest_l2_xpos/ypos
+// (the x/y it writes into the flit header; declared below). So the gate indexes sigma
+// by the same slice number software programs.
+wire [`HOME_ID_WIDTH-1:0] maw_req_flat;
+xy_to_flat_id maw_xy_to_flat (
+    .x_coord (msg_dest_l2_xpos),
+    .y_coord (msg_dest_l2_ypos),
+    .flat_id (maw_req_flat)
+);
+wire [`MAW_SLICE_IDX_WIDTH-1:0] maw_req_slice = maw_req_flat[`MAW_SLICE_IDX_WIDTH-1:0];
 reg maw_stall;
 
 always @ (posedge clk)
@@ -314,7 +323,7 @@ begin
    msg_src_chipid = chipid;
    msg_src_fbits = `NOC_FBITS_L1;
    // Set fbits for on-chip device access according to the fbits field in addr
-   // For interrupt controller access, hard code the fbits. This is DECADES_CHIP specific. 
+   // For interrupt controller access, hard code the fbits. This is DECADES_CHIP specific.
    // otherwise set fbits to 0 (target L2)
    msg_dest_fbits = (noc1buffer_noc1encoder_req_address[39:33] == 7'b1110000) ?
                    noc1buffer_noc1encoder_req_address[`ON_CHIP_DEV_FBITS] : `NOC_FBITS_L2;
@@ -399,8 +408,8 @@ begin
          t1_interrupt_cpuid = req_data0[14:9];
          msg_dest_l2_xpos_new = req_data0[`NOC_X_WIDTH+17:18];
          msg_dest_l2_ypos_new = req_data0[`NOC_Y_WIDTH+`NOC_X_WIDTH+17:`NOC_X_WIDTH+18];
-         msg_dest_l2_xpos = req_data0[63] ? msg_dest_l2_xpos_new : msg_dest_l2_xpos_compat; 
-         msg_dest_l2_ypos = req_data0[63] ? msg_dest_l2_ypos_new : msg_dest_l2_ypos_compat; 
+         msg_dest_l2_xpos = req_data0[63] ? msg_dest_l2_xpos_new : msg_dest_l2_xpos_compat;
+         msg_dest_l2_ypos = req_data0[63] ? msg_dest_l2_ypos_new : msg_dest_l2_ypos_compat;
          msg_dest_chipid  = req_data0[63] ? req_data0[`NOC_CHIPID_WIDTH+`NOC_Y_WIDTH+`NOC_X_WIDTH+17:`NOC_Y_WIDTH+`NOC_X_WIDTH+18] : `NOC_CHIPID_WIDTH'b0;
       end
       `L15_NOC1_REQTYPE_LR_REQUEST:
@@ -561,7 +570,7 @@ begin
 
    // ack logic to CSM
    noc1encoder_csm_req_ack = 0;
-   if (csm_noc1encoder_req_val && (flit_state == msg_length) && noc1out_ready 
+   if (csm_noc1encoder_req_val && (flit_state == msg_length) && noc1out_ready
    && (req_source == `L15_NOC1ENCODER_SOURCE_CSM))
       noc1encoder_csm_req_ack = 1'b1;
    else
